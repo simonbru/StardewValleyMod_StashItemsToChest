@@ -16,8 +16,6 @@ namespace StashItemsToChest
 
         public override void Entry(IModHelper helper)
         {
-            base.Entry(helper);
-
             ModConfig = helper.ReadConfig<StashItemsToChestConfig>();
             StardewModdingAPI.Events.GameEvents.UpdateTick += UpdateTickEvent;
 
@@ -38,19 +36,19 @@ namespace StashItemsToChest
                     return itemGrabMenu.behaviorOnItemGrab.Target as Chest;
                 }
             }
-            else
-            {
-                if (Game1.activeClickableMenu.GetType().Name == "ACAMenu")
-                {
-                    dynamic thing = (dynamic)Game1.activeClickableMenu;
-                    if (thing != null && thing.chestItems != null)
-                    {
-                        Chest aChest = new Chest(true);
-                        aChest.items = thing.chestItems;
-                        return aChest;
-                    }
-                }
-            }
+            //else
+            //{
+            //    if (Game1.activeClickableMenu.GetType().Name == "ACAMenu")
+            //    {
+            //        dynamic thing = (dynamic)Game1.activeClickableMenu;
+            //        if (thing != null && thing.chestItems != null)
+            //        {
+            //            Chest aChest = new Chest(true);
+            //            aChest.items = thing.chestItems;
+            //            return aChest;
+            //        }
+            //    }
+            //}
             return null;
         }
 
