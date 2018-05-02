@@ -4,23 +4,49 @@ using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
+using System.Linq;
 using Microsoft.Xna.Framework.Input;
 
 namespace StashItemsToChest
 {
     public class StashItemsToChest : Mod
     {
-        private KeyboardState lastKeyboardState;
+		//private KeyboardState lastKeyboardState;
+
+		public static string keystr(Keys[] keys)
+		{
+			return String.Join(",", keys.Select(key => key.ToString()));
+		}
 
         public static StashItemsToChestConfig ModConfig { get; protected set; }
 
         public override void Entry(IModHelper helper)
         {
             ModConfig = helper.ReadConfig<StashItemsToChestConfig>();
-            StardewModdingAPI.Events.GameEvents.UpdateTick += UpdateTickEvent;
 
-            lastKeyboardState = Keyboard.GetState();
+			//ControlEvents.KeyReleased += ControlEvents_KeyReleased;
+			ControlEvents.KeyPressed += ControlEvents_KeyReleased;
+
+			ControlEvents.KeyboardChanged += (sender, e) =>
+			{
+				Monitor.Log($"KeyboardChanged. Before: '{keystr(e.PriorState.GetPressedKeys())}', After: '{keystr(e.NewState.GetPressedKeys())}'");
+			};
+            //StardewModdingAPI.Events.GameEvents.UpdateTick += UpdateTickEvent;
+
+            //lastKeyboardState = Keyboard.GetState();
         }
+
+		private void ControlEvents_KeyReleased(object sender, EventArgsKeyPressed e)
+		{
+			if (!Context.IsWorldReady) return;
+
+			if (e.KeyPressed == ModConfig.stashKey)
+			{
+				StashUp();
+			}
+
+		}
 
         //PhthaloBlue: these blocks of codes below are from Chest Pooling mod by mralbobo
         //repo link here: https://github.com/mralbobo/stardew-chest-pooling, they are useful so I use them
@@ -52,42 +78,25 @@ namespace StashItemsToChest
             return null;
         }
 
-
-        //PhthaloBlue: these are my codes
-        void UpdateTickEvent(object sender, EventArgs e)
+        static void StashUp()
         {
-            if(!Game1.game1.IsActive)
-                return;
+			if (!Game1.game1.IsActive || Game1.currentLocation == null) return;
+			
+            Chest OpenChest = getOpenChest();
+            
+			if (OpenChest == null || OpenChest.isEmpty()) return;
 
-            if (Game1.currentLocation == null)
-                return;
-
-            KeyboardState currentKeyboardState = Keyboard.GetState();
-            StashUp(this.lastKeyboardState, currentKeyboardState);
-            this.lastKeyboardState = currentKeyboardState;
-        }
-
-        static void StashUp(KeyboardState lastKeyboardState, KeyboardState currentKeyboardState)
-        {
-            // If the stash key was just released.
-            if (lastKeyboardState.IsKeyDown(ModConfig.stashKey) && currentKeyboardState.IsKeyUp(ModConfig.stashKey))
+            foreach (Item chestItem in OpenChest.items)
             {
-                Chest OpenChest = getOpenChest();
-                if (OpenChest == null || OpenChest.isEmpty())
-                    return;
-
-                foreach (Item chestItem in OpenChest.items)
+                foreach (Item playerItem in Game1.player.items)
                 {
-                    foreach (Item playerItem in Game1.player.items)
-                    {
-                        if (playerItem == null)
-                            continue;
+                    if (playerItem == null)
+                        continue;
 
-                        if (playerItem.canStackWith(chestItem))
-                        {
-                            OpenChest.grabItemFromInventory(playerItem, Game1.player);
-                            break;
-                        }
+                    if (playerItem.canStackWith(chestItem))
+                    {
+                        OpenChest.grabItemFromInventory(playerItem, Game1.player);
+                        break;
                     }
                 }
             }
