@@ -16,7 +16,7 @@ namespace StashItemsToChest
 
         public override void Entry(IModHelper helper)
         {
-            base.Entry(helper);
+            //base.Entry(helper);
 
             ModConfig = helper.ReadConfig<StashItemsToChestConfig>();
             StardewModdingAPI.Events.GameEvents.UpdateTick += UpdateTickEvent;
